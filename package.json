@@ -1,0 +1,1 @@
+{"dependencies":{"@google-cloud/local-auth":"^2.1.1","dotenv":"^16.0.3","google-auth-library":"^8.7.0","googleapis":"^105.0.0","mysql2":"^2.3.3"}}
