@@ -182,6 +182,42 @@ class GSheetHandler extends GAuthHandler{
       }
       
 
+      async createNewSheet(sheetName) {
+        // check that we have the rights to modify/Create the GSheet
+        const auth = await this.getGAuth();
+        if (![
+            AuthScope.SpreadSheet,
+            AuthScope.Drive,
+          ].some(scope => this.authScopes.includes(scope))) {
+            console.log(`${AuthScope.Drive} or ${AuthScope.SpreadSheet} not in auth. scopes:\n${this.authScopes}`);
+            return null;
+          }
+      
+        try {
+          const sheets = google.sheets({ version: 'v4', auth: auth });
+          const request = {
+            'addSheet': {
+              'properties': {
+                'title': sheetName,
+              },
+            },
+          };
+          // Create a batch update request containing the addSheet request
+          const batch_update_request = {
+            'requests': [request],
+          };
+      
+          // Execute the batch update request
+          const response = await sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.spreadsheetId,
+            requestBody: batch_update_request,
+          });
+          return response.data.replies[0].addSheet.properties;
+        } catch (error) {
+          console.log(`An error occurred: ${error}`);
+          return null;
+        }
+      }
       
 
 
@@ -198,7 +234,7 @@ vals = [['A', 'B'],
 ['C', 'D'],
 
 ]
-gsheet.createSpreadsheet("test sheet").then((value) => {
+gsheet.createNewSheet("Sheet5").then((value) => {
   console.log(value);
   // Expected output: "Success!"
 });
