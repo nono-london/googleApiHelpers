@@ -1,6 +1,9 @@
 const {GAuthHandler, AuthScope} = require('./g_auth_helpers');
 const {google} = require('googleapis');
 const dotenv = require('dotenv');
+const miscHelpers = require('./misc_helpers');
+
+
 dotenv.config();
 class GSheetHandler extends GAuthHandler{
     
@@ -8,8 +11,10 @@ class GSheetHandler extends GAuthHandler{
       super(authScopes);
       this.spreadsheetId=spreadsheetId;
       // https://stackoverflow.com/questions/43431550/async-await-class-constructor
+      // TO DO: doesn't work, doesn't seem to be awaited for
       (async () => {
            await this.getGAuth();
+           console.log("Code has run");
         })();
     }
 
@@ -68,6 +73,52 @@ class GSheetHandler extends GAuthHandler{
 
     
 
+    
+      async updateGSheet(sheetName, sheetNewValues, sheetRange = null, sheetStartCell = null) {
+        const auth = await this.getGAuth();
+        
+        // check that we have the rights to modify the GSheet
+        if (!this.authScopes.includes('https://www.googleapis.com/auth/spreadsheets')) {
+          console.log(`${AuthScope.SpreadSheet.value} not in auth. scopes:\n${this.authScopes}`);
+          return -1;
+        }
+    
+        // set sheet_range_address
+        if (sheetRange === null && sheetStartCell === null) {
+          console.log('sheetRange and sheetStartCell can not be null at the same time');
+          return -1;
+        } else if (sheetStartCell !== null) {
+          sheetRange = await miscHelpers.buildSheetRange(sheetNewValues, sheetStartCell);
+        }
+    
+        // The ranges to retrieve from the spreadsheet.
+        const sheetRangeAddresses = `${sheetName}!${sheetRange}`;
+    
+        let updatedCells = 0;
+        try {
+          const sheets = google.sheets({version: 'v4', auth: auth});
+          const body = {
+            values: sheetNewValues
+          };
+          const response = await sheets.spreadsheets.values.update({
+            spreadsheetId: this.spreadsheetId,
+            range: sheetRangeAddresses,
+            valueInputOption: 'USER_ENTERED',
+            resource: body
+          });
+    
+          updatedCells = response.data.updatedCells;
+    
+        } catch (error) {
+          console.log(`An error occurred: ${error}`);
+        }
+    
+        return updatedCells;
+      }
+    
+    
+    
+
 
 }
 let authScopes = [
@@ -76,7 +127,13 @@ let authScopes = [
   ];
 spreadsheetId = process.env.G_SHEET_ID;
 gsheet = new GSheetHandler(authScopes, spreadsheetId);
-gsheet.readSheet("Sheet1", "A1:Z30").then((value) => {
+
+
+vals = [['A', 'B'],
+['C', 'D'],
+
+]
+gsheet.updateGSheet("Sheet1",vals, null, "b7").then((value) => {
   console.log(value);
   // Expected output: "Success!"
 });
