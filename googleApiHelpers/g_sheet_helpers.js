@@ -220,6 +220,59 @@ class GSheetHandler extends GAuthHandler{
       }
       
 
+      async deleteSheet(sheetName = null, sheetId = -1) {
+        const auth = await this.getGAuth();
+        // check that we have the rights to modify/Create the GSheet
+        if (!this.authScopes.includes(AuthScope.SpreadSheet)) {
+          console.log(`${AuthScope.SpreadSheet} not in auth. scopes:\n${this.authScopes}`);
+          return null;
+        }
+      
+        // get sheet id
+        if (sheetId === -1 && sheetName !== null) {
+          const spreadsheetDesc = await this.getSheetsProperties();
+          for (const sheet of spreadsheetDesc) {
+            if (sheet.title.toUpperCase() === sheetName.toUpperCase()) {
+              sheetId = sheet.sheetId;
+              break;
+            }
+          }
+          if (sheetId === -1) {
+            console.log(`Error ${sheetName} was not found in workbook sheets:\n${spreadsheetDesc}`);
+            return null;
+          }
+        }
+      
+        // create a DeleteSheetRequest object
+        const deleteRequest = {
+          deleteSheet: {
+            sheetId: sheetId,
+          },
+        };
+      
+        // create a batch update request
+        const batchUpdateRequest = {
+          requests: [deleteRequest],
+        };
+      
+        try {
+          // execute the batch update request to delete the sheet
+          const service = google.sheets({ version: 'v4',});
+          const response = service.spreadsheets.batchUpdate({
+            auth: auth,
+            spreadsheetId: this.spreadsheetId,
+            requestBody: batchUpdateRequest,
+          });
+          console.log('Sheet deleted successfully!');
+          return response.data;
+        } catch (error) {
+          console.log(`An error occurred: ${error}`);
+          return null;
+        }
+      }
+      
+      
+
 
 }
 let authScopes = [
@@ -234,7 +287,7 @@ vals = [['A', 'B'],
 ['C', 'D'],
 
 ]
-gsheet.createNewSheet("Sheet5").then((value) => {
+gsheet.deleteSheet("Sheet5").then((value) => {
   console.log(value);
   // Expected output: "Success!"
 });
