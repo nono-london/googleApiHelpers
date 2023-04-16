@@ -4,25 +4,26 @@ Helps you connect to your G documents, and deals with the Google API
 
 
 # Install App
-* in root folder copy credential file in
-```
-credentials.json
-```
-* create .env file with:
-```
-MYSQL_USERNAME = ''
-MYSQL_PASSWORD = ''
-MYSQL_DATABASE_NAME = ""
-MYSQL_PORT = 3308
-MYSQL_HOST_URL = ''
-```
-* install node libs
+### Nodejs libs
 ```
 npm install
 ```
 
+### create .env file:
+add a spredsheet id, you rights to edit
 
+```
+G_SHEET_ID = 'example:aksjasKJkjanmnUIU'
+```
+### 
+In order to use the Google API:
 
+* create an App in your Google Cloud
+* in root/g_credentials folder save Google API credential as "g_credentials.json" in
+
+```
+root/g_credentials/g_credentials.json
+```
 
 # Google Account Prerequisites
 node.js Tutorial can be found on: https://developers.google.com/sheets/api/quickstart/nodejs
@@ -45,10 +46,20 @@ https://console.cloud.google.com/flows/enableapi?apiid=sheets.googleapis.com
     npm install googleapis@105 @google-cloud/local-auth@2.1.0 --save
 ```
 
-* copy the json Google Auth0 file in root folder, and name it: "credentials.json"
-* make sure that "credentials.json" and "token.json" are added in .gitignore
-* run the index.js file as a test file.
+* copy the json Google Auth0 file in root/g_credentials/, and name it: "g_credentials.json"
+* make sure that "g_credentials.json" and "g_token.json" are added in .gitignore
 
-# Google Sheet API
-* write on Google sheet: https://daily-dev-tips.com/posts/nodejs-write-data-in-a-google-sheet/
+# TODO:
+* create tests libs
+*
+
+
+
+
+# Sources and useful links
+### Google API
+* [write on Google sheet](https://daily-dev-tips.com/posts/nodejs-write-data-in-a-google-sheet/)
 * 
+
+### Other libs
+
