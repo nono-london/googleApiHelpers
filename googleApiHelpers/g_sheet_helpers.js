@@ -14,14 +14,14 @@ class GSheetHandler extends GAuthHandler{
     }
 
     async getSheetDesc(){
-      const auth = await this.getGAuth();
+        const auth = await this.getGAuth();
 
-      const sheets = google.sheets({version: 'v4', auth});
-      const request = await sheets.spreadsheets.get({
+        const sheets = google.sheets({version: 'v4', auth});
+        const reponse = await sheets.spreadsheets.get({
         spreadsheetId: this.spreadsheetId,
-        
-      });
-      return request.data?? null;
+
+        });
+        return reponse.data?? null;
     }
 
     async getSheetsProperties(){
@@ -46,6 +46,25 @@ class GSheetHandler extends GAuthHandler{
 
     }
 
+    async readSheet(sheetName, sheetRange){
+        // https://developers.google.com/sheets/api/quickstart/nodejs
+        const sheetRangeAddress = sheetName + "!" + String(sheetRange).toUpperCase();
+        const auth = await this.getGAuth();
+
+        const sheets = google.sheets({version: 'v4', auth});
+        const reponse = await sheets.spreadsheets.values.get({
+            spreadsheetId: this.spreadsheetId,
+            range: sheetRangeAddress,
+          });
+          const rows = reponse.data.values;
+          if (!rows || rows.length === 0) {
+            console.log('No data found.');
+            return null;
+          }else{
+            return rows;
+          }
+
+    }
 
 }
 let authScopes = [
@@ -54,7 +73,7 @@ let authScopes = [
   ];
 spreadsheetId = process.env.G_SHEET_ID;
 gsheet = new GSheetHandler(authScopes, spreadsheetId);
-gsheet.getSheetsProperties().then((value) => {
+gsheet.readSheet("Sheet1", "A1:Z30").then((value) => {
   console.log(value);
   // Expected output: "Success!"
 });
