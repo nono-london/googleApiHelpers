@@ -117,7 +117,41 @@ class GSheetHandler extends GAuthHandler{
       }
     
     
-    
+      async clearGSheetRange(sheetName, sheetRange = null) {
+        // check that we have the rights to modify the GSheet
+        const auth = await this.getGAuth();
+        const requiredAuthScopes = [
+          AuthScope.SpreadSheet,
+          AuthScope.Drive,
+          AuthScope.DriveFile
+        ];
+        if (!requiredAuthScopes.some((scope) => this.authScopes.includes(scope))) {
+          console.log(`${AuthScope.SpreadSheet} or ${AuthScope.SpreadSheetReadOnly} not in auth. scopes:\n${this.authScopes}`);
+          return null;
+        }
+      
+        // The ranges to retrieve from the spreadsheet.
+        const sheetRangeAddresses = sheetRange ? `${sheetName}!${sheetRange}` : sheetName;
+      
+        try {
+            const service = google.sheets({version: 'v4', auth: auth});
+          
+            const clearValuesRequestBody = {};
+      
+            const request = service.spreadsheets.values.clear({
+            spreadsheetId: this.spreadsheetId,
+            range: sheetRangeAddresses,
+            requestBody: clearValuesRequestBody
+          });
+      
+          const response = await request;
+          return response.data.clearedRange;
+        } catch (error) {
+          console.log(`An error occurred: ${error}`);
+          return null;
+        }
+      }
+      
 
 
 }
@@ -133,7 +167,7 @@ vals = [['A', 'B'],
 ['C', 'D'],
 
 ]
-gsheet.updateGSheet("Sheet1",vals, null, "b7").then((value) => {
+gsheet.clearGSheetRange("Sheet1","A1:b1").then((value) => {
   console.log(value);
   // Expected output: "Success!"
 });
