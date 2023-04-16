@@ -3,3 +3,4 @@
 /googleApiHelpers/g_credentials/*
 g_credentials.json
 g_token.json
+.idea
