@@ -71,86 +71,117 @@ class GSheetHandler extends GAuthHandler{
 
     }
 
-    
 
+    async updateGSheet(sheetName, sheetNewValues, sheetRange = null, sheetStartCell = null) {
+    const auth = await this.getGAuth();
     
-      async updateGSheet(sheetName, sheetNewValues, sheetRange = null, sheetStartCell = null) {
-        const auth = await this.getGAuth();
+    // check that we have the rights to modify the GSheet
+    if (!this.authScopes.includes('https://www.googleapis.com/auth/spreadsheets')) {
+        console.log(`${AuthScope.SpreadSheet.value} not in auth. scopes:\n${this.authScopes}`);
+        return -1;
+    }
+
+    // set sheet_range_address
+    if (sheetRange === null && sheetStartCell === null) {
+        console.log('sheetRange and sheetStartCell can not be null at the same time');
+        return -1;
+    } else if (sheetStartCell !== null) {
+        sheetRange = await miscHelpers.buildSheetRange(sheetNewValues, sheetStartCell);
+    }
+
+    // The ranges to retrieve from the spreadsheet.
+    const sheetRangeAddresses = `${sheetName}!${sheetRange}`;
+
+    let updatedCells = 0;
+    try {
+        const sheets = google.sheets({version: 'v4', auth: auth});
+        const body = {
+        values: sheetNewValues
+        };
+        const response = await sheets.spreadsheets.values.update({
+        spreadsheetId: this.spreadsheetId,
+        range: sheetRangeAddresses,
+        valueInputOption: 'USER_ENTERED',
+        resource: body
+        });
+
+        updatedCells = response.data.updatedCells;
+
+    } catch (error) {
+        console.log(`An error occurred: ${error}`);
+    }
+
+    return updatedCells;
+    }
+    
+    
+    async clearGSheetRange(sheetName, sheetRange = null) {
+    // check that we have the rights to modify the GSheet
+    const auth = await this.getGAuth();
+    const requiredAuthScopes = [
+        AuthScope.SpreadSheet,
+        AuthScope.Drive,
+        AuthScope.DriveFile
+    ];
+    if (!requiredAuthScopes.some((scope) => this.authScopes.includes(scope))) {
+        console.log(`${AuthScope.SpreadSheet} or ${AuthScope.SpreadSheetReadOnly} not in auth. scopes:\n${this.authScopes}`);
+        return null;
+    }
+    
+    // The ranges to retrieve from the spreadsheet.
+    const sheetRangeAddresses = sheetRange ? `${sheetName}!${sheetRange}` : sheetName;
+    
+    try {
+        const service = google.sheets({version: 'v4', auth: auth});
         
-        // check that we have the rights to modify the GSheet
-        if (!this.authScopes.includes('https://www.googleapis.com/auth/spreadsheets')) {
-          console.log(`${AuthScope.SpreadSheet.value} not in auth. scopes:\n${this.authScopes}`);
-          return -1;
-        }
+        const clearValuesRequestBody = {};
     
-        // set sheet_range_address
-        if (sheetRange === null && sheetStartCell === null) {
-          console.log('sheetRange and sheetStartCell can not be null at the same time');
-          return -1;
-        } else if (sheetStartCell !== null) {
-          sheetRange = await miscHelpers.buildSheetRange(sheetNewValues, sheetStartCell);
-        }
+        const request = service.spreadsheets.values.clear({
+        spreadsheetId: this.spreadsheetId,
+        range: sheetRangeAddresses,
+        requestBody: clearValuesRequestBody
+        });
     
-        // The ranges to retrieve from the spreadsheet.
-        const sheetRangeAddresses = `${sheetName}!${sheetRange}`;
-    
-        let updatedCells = 0;
-        try {
-          const sheets = google.sheets({version: 'v4', auth: auth});
-          const body = {
-            values: sheetNewValues
-          };
-          const response = await sheets.spreadsheets.values.update({
-            spreadsheetId: this.spreadsheetId,
-            range: sheetRangeAddresses,
-            valueInputOption: 'USER_ENTERED',
-            resource: body
-          });
-    
-          updatedCells = response.data.updatedCells;
-    
-        } catch (error) {
-          console.log(`An error occurred: ${error}`);
-        }
-    
-        return updatedCells;
-      }
-    
-    
-      async clearGSheetRange(sheetName, sheetRange = null) {
-        // check that we have the rights to modify the GSheet
+        const response = await request;
+        return response.data.clearedRange;
+    } catch (error) {
+        console.log(`An error occurred: ${error}`);
+        return null;
+    }
+    }
+
+    async createSpreadsheet(spreadsheetName) {
+        // https://developers.google.com/sheets/api/guides/create#python
         const auth = await this.getGAuth();
-        const requiredAuthScopes = [
+        // check that we have the rights to modify/Create the GSheet
+        if (![
           AuthScope.SpreadSheet,
           AuthScope.Drive,
-          AuthScope.DriveFile
-        ];
-        if (!requiredAuthScopes.some((scope) => this.authScopes.includes(scope))) {
-          console.log(`${AuthScope.SpreadSheet} or ${AuthScope.SpreadSheetReadOnly} not in auth. scopes:\n${this.authScopes}`);
+        ].some(scope => this.authScopes.includes(scope))) {
+          console.log(`${AuthScope.Drive} or ${AuthScope.SpreadSheet} not in auth. scopes:\n${this.authScopes}`);
           return null;
         }
-      
-        // The ranges to retrieve from the spreadsheet.
-        const sheetRangeAddresses = sheetRange ? `${sheetName}!${sheetRange}` : sheetName;
-      
+        
         try {
-            const service = google.sheets({version: 'v4', auth: auth});
-          
-            const clearValuesRequestBody = {};
-      
-            const request = service.spreadsheets.values.clear({
-            spreadsheetId: this.spreadsheetId,
-            range: sheetRangeAddresses,
-            requestBody: clearValuesRequestBody
+          const service = google.sheets({ version: 'v4', auth: auth });
+          const spreadsheet = await service.spreadsheets.create({
+            requestBody: {
+              properties: {
+                title: spreadsheetName,
+              },
+            },
+            fields: 'spreadsheetId',
           });
       
-          const response = await request;
-          return response.data.clearedRange;
+          console.log(`Spreadsheet ID: ${spreadsheet.data.spreadsheetId}`);
+          return spreadsheet.data.spreadsheetId;
         } catch (error) {
           console.log(`An error occurred: ${error}`);
           return null;
         }
       }
+      
+
       
 
 
@@ -167,7 +198,7 @@ vals = [['A', 'B'],
 ['C', 'D'],
 
 ]
-gsheet.clearGSheetRange("Sheet1","A1:b1").then((value) => {
+gsheet.createSpreadsheet("test sheet").then((value) => {
   console.log(value);
   // Expected output: "Success!"
 });

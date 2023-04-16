@@ -63,7 +63,7 @@ https://console.cloud.google.com/flows/enableapi?apiid=sheets.googleapis.com
 * [Create Google API credentials](https://console.cloud.google.com/flows/enableapi?apiid=sheets.googleapis.com
 )
 * [write on Google sheet](https://daily-dev-tips.com/posts/nodejs-write-data-in-a-google-sheet/)
-* 
+* [Create a spreadsheet](https://developers.google.com/sheets/api/guides/create)
 
 ### Other libs
 
