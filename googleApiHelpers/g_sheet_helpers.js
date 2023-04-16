@@ -239,3 +239,4 @@ gsheet.createNewSheet("Sheet5").then((value) => {
   // Expected output: "Success!"
 });
 
+module.exports = {GSheetHandler}
