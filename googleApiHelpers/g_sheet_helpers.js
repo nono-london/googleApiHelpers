@@ -66,6 +66,9 @@ class GSheetHandler extends GAuthHandler{
 
     }
 
+    
+
+
 }
 let authScopes = [
     AuthScope.SpreadSheet,
