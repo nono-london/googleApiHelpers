@@ -51,7 +51,9 @@ https://console.cloud.google.com/flows/enableapi?apiid=sheets.googleapis.com
 
 # TODO:
 * create tests libs
-*
+* check all scopes variables and add cheks for editable rights
+* create errors handlers
+
 
 
 
