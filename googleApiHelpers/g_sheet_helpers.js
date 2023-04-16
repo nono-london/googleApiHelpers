@@ -13,7 +13,7 @@ class GSheetHandler extends GAuthHandler{
         })();
     }
 
-    async get_sheet_desc(){
+    async getSheetDesc(){
       const auth = await this.getGAuth();
 
       const sheets = google.sheets({version: 'v4', auth});
@@ -21,7 +21,29 @@ class GSheetHandler extends GAuthHandler{
         spreadsheetId: this.spreadsheetId,
         
       });
-      console.log(request);
+      return request.data?? null;
+    }
+
+    async getSheetsProperties(){
+      const data = await this.getSheetDesc();
+      const sheets=data.sheets;
+      
+      if (sheets){
+        let sheetProperties = sheets.map(sheet => {
+            const propertyEntries = Object.entries(sheet.properties);
+            return propertyEntries.reduce((obj, [key, value]) => {
+            obj[key] = value;
+            return obj;
+            }, {});
+        });
+        
+        
+        return sheetProperties
+      }else{
+        return null;
+      }
+
+
     }
 
 
@@ -32,4 +54,8 @@ let authScopes = [
   ];
 spreadsheetId = process.env.G_SHEET_ID;
 gsheet = new GSheetHandler(authScopes, spreadsheetId);
-gsheet.get_sheet_desc();
+gsheet.getSheetsProperties().then((value) => {
+  console.log(value);
+  // Expected output: "Success!"
+});
+
